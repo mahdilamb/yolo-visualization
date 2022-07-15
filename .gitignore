@@ -1,0 +1,4 @@
+.conda
+.vscode
+yolov7/*
+__pycache__
