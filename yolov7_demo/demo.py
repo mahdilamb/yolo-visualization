@@ -1,8 +1,4 @@
-
-
-
 import torch
-from infer import COCO_CLASSES
 
 from yolo_heatmap.heatmap import create_heatmap
 import numpy as np
@@ -42,17 +38,29 @@ def create_predictions(weights,img_path,imgsz = 640,
 
 if __name__ == "__main__":
     import cv2
+    
     import matplotlib.pyplot as plt
 
     pred, im0,img = create_predictions(weights="./yolov7.pt", img_path=r"./yolov7/inference/images/horses.jpg")
 
     horse = 37
-    out = create_heatmap(pred,cls=None, use_objectiveness=True, output_size = im0.shape[:2],   top_n=50)
-    plt.style.use('ggplot')
-    import matplotlib
-    matplotlib.use( 'tkagg' )
-    plt.imshow(im0)
-    plt.imshow(out.detach().cpu().numpy(),alpha=.8)
-    plt.show()
+    
+    samples = {
+        
+        "horsiness": create_heatmap(pred,cls=horse, use_objectiveness=True, output_size = im0.shape[:2]),
+        "horsiness_kde":create_heatmap(pred,cls=horse, use_objectiveness=True, output_size = im0.shape[:2],   top_n=100, use_kde=True),
+        "objectiveness": create_heatmap(pred,cls=None, use_objectiveness=True, output_size = im0.shape[:2]),
+        "objectiveness_kde":create_heatmap(pred,cls=None, use_objectiveness=True, output_size = im0.shape[:2],   top_n=100, use_kde=True),
+    }
+    fig, axs = plt.subplots(2,2)
+    for i,(label, heatmap) in enumerate(samples.items()):
+        ax = axs[i//2, int("kde" in label)]
+        ax.imshow(im0)
+        ax.set_title(label)
+        ax.get_xaxis().set_ticks([])
+        ax.get_yaxis().set_ticks([])
+        ax.imshow(heatmap.detach().cpu().numpy(),alpha=.8)
+    plt.tight_layout()
+    plt.savefig("horses_demo.jpg")
     
     
